@@ -9,7 +9,7 @@ import os
 import tempfile
 import pytest
 import xml.etree.ElementTree as ET
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 
 from chroma_mcp_client.validation.test_collector import (
     parse_junit_xml,
@@ -102,7 +102,7 @@ def mock_chroma_client():
     """Create a mock Chroma client for testing."""
     mock_client = MagicMock()
     mock_collection = MagicMock()
-    mock_client.get_collection.return_value = mock_collection
+    mock_client.get_or_create_collection.return_value = mock_collection
 
     return mock_client, mock_collection
 
@@ -132,16 +132,19 @@ def test_store_test_results(mock_chroma_client):
     }
 
     # Call the function
-    with patch("uuid.uuid4", return_value="test-uuid"):
+    with patch("uuid.uuid4") as mock_uuid:
+        # mock_uuid.return_value = "test-uuid" # Old problematic mock
+        mock_uuid_obj = MagicMock()
+        mock_uuid_obj.hex = "test-uuid-hex"  # Simulate the .hex attribute
+        mock_uuid.return_value = mock_uuid_obj  # Return the mock object
+
         result = store_test_results(
             results_dict=test_results, collection_name="test_results_v1", chroma_client=mock_client
         )
 
     # Check the result
-    assert result == "test-uuid"
-
-    # Verify the mock was called correctly
-    mock_client.get_collection.assert_called_once_with(name="test_results_v1")
+    assert result == "test-uuid-hex"  # Check if the run_id is correct
+    mock_client.get_or_create_collection.assert_called_once_with(name="test_results_v1", embedding_function=ANY)
 
     # Check add was called on the collection
     mock_collection.add.assert_called_once()
@@ -153,6 +156,12 @@ def test_store_test_results(mock_chroma_client):
     assert len(call_kwargs["documents"]) == 2
     assert len(call_kwargs["metadatas"]) == 2
     assert len(call_kwargs["ids"]) == 2
+
+    documents_arg = call_kwargs["documents"]
+    ids_arg = call_kwargs["ids"]
+    assert f'"run_id": "test-uuid-hex"' in documents_arg[0]
+    assert ids_arg[0] == "test-uuid-hex_tests.test_module.test_1"
+    assert ids_arg[1] == "test-uuid-hex_tests.test_module.test_2"
 
 
 def test_create_test_transition_evidence(sample_junit_xml):

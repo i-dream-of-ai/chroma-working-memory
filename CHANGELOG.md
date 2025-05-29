@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.28] - 2025-05-30
+
+**Fixed:**
+
+- Fixed ONNX model CPU execution issues by ensuring `CHROMA_CPU_EXECUTION_PROVIDER` is properly handled for `default`/`fast` embedding functions.
+
 ## [0.2.27] - 2025-05-30
 
 **Added:**

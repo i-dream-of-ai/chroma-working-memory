@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock, mock_open, ANY
 import uuid
 import datetime
 from pathlib import Path
@@ -226,52 +226,57 @@ class TestTestCollector:
             mock_parse.assert_any_call("after.xml")
             mock_compare.assert_called_once()
 
-    def test_store_test_results(self):
+    @patch("chroma_mcp_client.connection.get_client_and_ef")
+    def test_store_test_results(self, mock_get_client_and_ef):
         """Test storing test results in ChromaDB."""
-        with patch("chromadb.Client") as mock_client_class:
-            # Setup mock client
-            mock_client = MagicMock()
-            mock_collection = MagicMock()
-            mock_client.get_collection.return_value = mock_collection
-            mock_client_class.return_value = mock_client
+        # Setup mock client and ef returned by the patched get_client_and_ef
+        mock_client_instance = MagicMock()
+        mock_ef_instance = MagicMock()
+        mock_collection_instance = MagicMock()
 
-            # Set up test results
-            results = {
-                "test1": {"test_name": "test1", "test_file": "test_file.py", "status": "pass", "error_message": None}
-            }
+        mock_get_client_and_ef.return_value = (mock_client_instance, mock_ef_instance)
+        mock_client_instance.get_or_create_collection.return_value = mock_collection_instance
 
-            # Store the results
-            with patch("uuid.uuid4") as mock_uuid:
-                mock_uuid.return_value = "test-uuid"
-                with patch("datetime.datetime") as mock_datetime:
-                    mock_now = MagicMock()
-                    mock_now.isoformat.return_value = "2023-04-15T12:00:00Z"
-                    mock_datetime.now.return_value = mock_now
+        # Set up test results
+        results = {
+            "test1": {"test_name": "test1", "test_file": "test_file.py", "status": "pass", "error_message": None}
+        }
 
-                    run_id = store_test_results(results)
+        # Store the results
+        with patch("uuid.uuid4") as mock_uuid:
+            mock_uuid_obj = MagicMock()
+            mock_uuid_obj.hex = "test-uuid-hex"
+            mock_uuid.return_value = mock_uuid_obj
 
-                    # Verify the return value
-                    assert run_id == "test-uuid"
+            with patch("datetime.datetime") as mock_datetime:
+                mock_now = MagicMock()
+                mock_now.isoformat.return_value = "2023-04-15T12:00:00Z"
+                mock_datetime.now.return_value = mock_now
 
-                    # Verify the collection was accessed
-                    mock_client.get_collection.assert_called_once_with(name="test_results_v1")
+                run_id = store_test_results(results)
 
-                    # Verify data was added to collection
-                    mock_collection.add.assert_called_once()
+                # Verify the return value
+                assert run_id == "test-uuid-hex"
 
-                    # Check the arguments passed to add
-                    args = mock_collection.add.call_args
+                # Verify the collection was accessed
+                mock_client_instance.get_or_create_collection.assert_called_once_with(
+                    name="test_results_v1", embedding_function=mock_ef_instance
+                )
+                mock_collection_instance.add.assert_called_once()
 
-                    # Extract the positional arguments
-                    call_kwargs = args[1]
-                    documents = call_kwargs["documents"]
-                    metadatas = call_kwargs["metadatas"]
-                    ids = call_kwargs["ids"]
+                # Check the arguments passed to add
+                args = mock_collection_instance.add.call_args
 
-                    # Verify the document content
-                    assert len(documents) == 1
-                    assert len(metadatas) == 1
-                    assert len(ids) == 1
-                    assert "test1" in documents[0]
-                    assert metadatas[0]["test_id"] == "test1"
-                    assert ids[0] == "test-uuid_test1"
+                # Extract the positional arguments
+                call_kwargs = args[1]
+                documents = call_kwargs["documents"]
+                metadatas = call_kwargs["metadatas"]
+                ids = call_kwargs["ids"]
+
+                # Verify the document content
+                assert len(documents) == 1
+                assert len(metadatas) == 1
+                assert len(ids) == 1
+                assert "test1" in documents[0]
+                assert metadatas[0]["test_id"] == "test1"
+                assert ids[0] == "test-uuid-hex_test1"
