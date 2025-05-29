@@ -132,11 +132,12 @@ def test_store_test_results(mock_chroma_client):
     }
 
     # Call the function
-    with patch("uuid.uuid4") as mock_uuid:
+    with patch("uuid.uuid4") as mock_uuid, patch("chroma_mcp_client.connection.get_client_and_ef") as mock_get_client_and_ef:
         # mock_uuid.return_value = "test-uuid" # Old problematic mock
         mock_uuid_obj = MagicMock()
         mock_uuid_obj.hex = "test-uuid-hex"  # Simulate the .hex attribute
         mock_uuid.return_value = mock_uuid_obj  # Return the mock object
+        mock_get_client_and_ef.return_value = (None, MagicMock()) # Return a mock client and EF
 
         result = store_test_results(
             results_dict=test_results, collection_name="test_results_v1", chroma_client=mock_client
@@ -252,3 +253,35 @@ def test_create_test_transition_evidence_no_transitions():
     finally:
         os.unlink(xml1)
         os.unlink(xml2)
+
+
+def test_extract_test_results_from_junit(sample_junit_xml):
+    """Test extracting test results from a JUnit XML file (using parse_junit_xml)."""
+    results = parse_junit_xml(sample_junit_xml)
+
+    # Check that we got the right number of test results
+    assert len(results) == 3
+
+    # Check individual test results are structured as expected by other parts of the system
+    test_success_data = results.get("tests.test_module.test_success")
+    assert test_success_data is not None
+    assert test_success_data["status"] == "pass"
+    assert float(test_success_data["time"]) == 0.123
+    assert test_success_data["test_file"] == "tests/test_module.py"
+    assert test_success_data["error_message"] is None
+
+    test_failure_data = results.get("tests.test_module.test_failure")
+    assert test_failure_data is not None
+    assert test_failure_data["status"] == "fail"
+    assert float(test_failure_data["time"]) == 0.456
+    assert "AssertionError: Failed test" in test_failure_data["error_message"]
+
+    test_skip_data = results.get("tests.test_module.test_skip")
+    assert test_skip_data is not None
+    assert test_skip_data["status"] == "skip"
+
+
+def test_extract_test_results_junit_xml_missing_file():
+    """Test extracting results with a missing file (using parse_junit_xml)."""
+    with pytest.raises(FileNotFoundError):
+        parse_junit_xml("/nonexistent/path/to/tests.xml")
