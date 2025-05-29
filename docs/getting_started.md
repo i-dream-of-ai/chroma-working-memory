@@ -160,6 +160,9 @@ The server primarily uses environment variables for configuration. A `.env` file
   - `CHROMA_HEADERS`: Optional HTTP headers (JSON string) for `http` mode.
   - `CHROMA_TENANT`, `CHROMA_DATABASE`, `CHROMA_API_KEY`: Required for `cloud` mode.
 
+**Automatic Collection Creation:**
+Upon startup, the Chroma MCP Server automatically checks for and creates essential ChromaDB collections (e.g., `codebase_v1`, `chat_history_v1`, `derived_learnings_v1`, `thinking_sessions_v1`, `validation_evidence_v1`, `test_results_v1`) if they are not already present. This ensures that the server is ready for use without requiring manual setup of these core collections. This behavior simplifies initial setup, especially when using persistent storage for the first time.
+
 **Note on Embedding Function Consistency for Collections:**
 If you modify the `CHROMA_EMBEDDING_FUNCTION` environment variable (or the corresponding `--embedding-function` CLI argument for server startup) after collections like `codebase_v1` have already been created, you may encounter `Embedding function name mismatch` errors when client tools (e.g., `review-and-promote`, MCP server queries) try to access them. This happens because these tools often expect collections to use a specific embedding model (e.g., 'accurate' for `codebase_v1`).
 

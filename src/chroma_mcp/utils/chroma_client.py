@@ -138,22 +138,20 @@ KNOWN_EMBEDDING_FUNCTIONS: Dict[str, Callable[[], EmbeddingFunction]] = {
     # --- Local CPU/ONNX Options ---
     "default": lambda: ef.ONNXMiniLM_L6_V2(
         preferred_providers=(
-            # Force CPUExecutionProvider to avoid CoreML issues on not supported GPU systems
-            ["CPUExecutionProvider"]
-            # Original logic:
-            # onnxruntime.get_available_providers()
-            # if ONNXRUNTIME_AVAILABLE and onnxruntime.get_available_providers()
-            # else ["CPUExecutionProvider"]
+            onnxruntime.get_available_providers()
+            if ONNXRUNTIME_AVAILABLE
+            and os.getenv("CHROMA_CPU_EXECUTION_PROVIDER", "auto").lower() == "false"
+            and onnxruntime.get_available_providers()  # Ensure it's not empty
+            else ["CPUExecutionProvider"]
         )
     ),
     "fast": lambda: ef.ONNXMiniLM_L6_V2(  # Alias for default
         preferred_providers=(
-            # Force CPUExecutionProvider to avoid CoreML issues on not supported GPU systems
-            ["CPUExecutionProvider"]
-            # Original logic:
-            # onnxruntime.get_available_providers()
-            # if ONNXRUNTIME_AVAILABLE and onnxruntime.get_available_providers()
-            # else ["CPUExecutionProvider"]
+            onnxruntime.get_available_providers()
+            if ONNXRUNTIME_AVAILABLE
+            and os.getenv("CHROMA_CPU_EXECUTION_PROVIDER", "auto").lower() == "false"
+            and onnxruntime.get_available_providers()  # Ensure it's not empty
+            else ["CPUExecutionProvider"]
         )
     ),
     # --- Local SentenceTransformer Option ---
@@ -224,6 +222,26 @@ def get_embedding_function(name: str) -> EmbeddingFunction:
     """
     logger = get_logger("utils.chroma_client")
     normalized_name = name.lower()
+
+    # Handle TOKENIZERS_PARALLELISM for 'accurate' model
+    if normalized_name == "accurate":
+        # If CHROMA_CPU_EXECUTION_PROVIDER is true, or if TOKENIZERS_PARALLELISM is not set,
+        # default TOKENIZERS_PARALLELISM to "false" for the 'accurate' model to aid CPU execution.
+        # Users can still override by setting TOKENIZERS_PARALLELISM explicitly in their environment.
+        if (
+            os.getenv("CHROMA_CPU_EXECUTION_PROVIDER", "auto").lower() == "true"
+            or os.getenv("TOKENIZERS_PARALLELISM") is None
+        ):
+            logger.info(
+                "For 'accurate' embedding function, setting TOKENIZERS_PARALLELISM=false "
+                "to aid CPU execution. Set TOKENIZERS_PARALLELISM in your env to override."
+            )
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+        elif os.getenv("TOKENIZERS_PARALLELISM", "false").lower() != "false":
+            logger.warning(
+                "TOKENIZERS_PARALLELISM is set to something other than 'false' for the 'accurate' model. "
+                "This might cause issues if you don't have appropriate GPU/parallel processing setup."
+            )
 
     # Check availability flags first (more robust than just relying on dict presence)
     is_available = False
