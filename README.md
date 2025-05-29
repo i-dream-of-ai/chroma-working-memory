@@ -22,7 +22,7 @@ Key features:
 - **Semantic Code Chunking:** Preserve logical code structures for more meaningful context retrieval
 - **Working Memory Tools:** MCP commands for capturing and retrieving development context
 - **Validation System:** Evidence-based validation for code changes and learning promotions
-- **Automated Test-Driven Learning:** Fully automated workflow from test failure to verified fix and learning promotion
+- **Automated Test-Driven Learning:** Fully automated workflow from test failure to verified fix and learning promotion. See the [Pytest Plugin Usage Guide](docs/integration/pytest_plugin_usage.md) to integrate this into your projects.
 
 See the [Getting Started with your Second Brain guide](docs/getting_started_second_brain.md) for more details.
 
@@ -79,6 +79,7 @@ Add or modify `.cursor/mcp.json` in your project root:
 - **Bidirectional Linking:** Creates navigable connections between chat discussions and code changes
 - **Semantic Code Chunking:** Uses logical boundaries (functions, classes) instead of fixed-size chunks
 - **Server-Side Timestamp Enforcement:** Ensures consistent timestamps across all collections
+- **Automatic Collection Creation:** Essential collections (e.g., `chat_history_v1`, `codebase_v1`) are automatically created on server startup if they don't exist.
 - **Enhanced Logging System:** Per-execution log files prevent contamination of JSON communication in stdio mode
 - **Embedding Function Management:** Tools to update collection metadata when changing embedding functions
 - **Collection Setup Command:** Simplifies creation of multiple collections with consistent configuration
@@ -99,7 +100,7 @@ Comprehensive documentation is available in the [docs directory](docs/):
 - [Usage Guides](docs/usage/README.md) - Detailed guides on how to use specific features and workflows.
 - [Enhanced Context Capture](docs/usage/enhanced_context_capture.md) - Details on code diff extraction and tool sequencing
 - [Semantic Code Chunking](docs/usage/semantic_chunking.md) - Logic-preserving code chunking for meaningful retrieval
-- [Automated Test Workflow](docs/usage/automated_test_workflow.md) - Test-driven learning with automatic validation
+- [Automated Test Workflow (Pytest Plugin Usage)](docs/integration/pytest_plugin_usage.md) - Test-driven learning with automatic validation
 - [Thinking Tools & Utilities](docs/thinking_tools/README.md) - Documentation for structured thinking and memory tools.
 - [Client and Developer Scripts](docs/scripts/README.md) - Guides for CLI tools and developer scripts.
 - [Logging Documentation](docs/logging/README.md) - Overview of logging features and configuration.

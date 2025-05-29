@@ -252,25 +252,35 @@ def store_test_results(
     Returns:
         ID of the stored test run
     """
-    # Use client if provided, otherwise assume one is already initialized
-    if chroma_client is None:
-        # Keep this function local to avoid circular imports
-        def get_chroma_client():
-            """Get a ChromaDB client instance."""
-            import chromadb
+    if not chroma_client:
+        # Lazy import and get client if not provided
+        from chroma_mcp_client.connection import get_client_and_ef
 
-            return chromadb.Client()
+        client, ef = get_client_and_ef(
+            # ef_name can be passed or defaults to env var
+            # CHROMA_EMBEDDING_FUNCTION or "default"
+        )
+        chroma_client = client
+    else:
+        # If chroma_client is provided, we still need to get the configured EF
+        # to ensure consistency, unless it's already part of a context
+        # where EF is managed externally. For safety, let's re-fetch if ef isn't obvious.
+        # A more robust solution might involve passing ef alongside client.
+        # For now, assume if client is passed, EF handling is external or matches default.
+        # Let's refine this: if chroma_client is passed, we *should* assume it's configured
+        # with an appropriate EF, or the collection it's interacting with will use its own.
+        # The most direct fix for *this specific bug* is to ensure OUR ef is used.
+        from chroma_mcp_client.connection import get_client_and_ef as get_ef_direct  # alias for clarity
 
-        chroma_client = get_chroma_client()
+        _, ef = get_ef_direct()  # We only need the EF if client was passed in.
 
-    # Ensure collection exists
-    try:
-        collection = chroma_client.get_collection(name=collection_name)
-    except Exception:
-        collection = chroma_client.create_collection(name=collection_name)
+    # Get or create the collection, explicitly passing our configured embedding function
+    collection = chroma_client.get_or_create_collection(
+        name=collection_name, embedding_function=ef  # Explicitly pass the configured embedding function object
+    )
 
     # Generate a test run ID
-    run_id = str(uuid.uuid4())
+    run_id = uuid.uuid4().hex
     timestamp = datetime.datetime.now().isoformat()
 
     # Prepare data for storage

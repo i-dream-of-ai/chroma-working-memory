@@ -33,8 +33,12 @@ The `chroma-mcp-server` package includes a Pytest plugin that enables automated 
     CHROMA_DB_PATH="./data/my_project_chroma_db" # Path relative to your project root
     CHROMA_LOG_DIR="./logs/my_project_chroma_logs"
     LOG_LEVEL="INFO"
-    TOKENIZERS_PARALLELISM="false"
+    CHROMA_EMBEDDING_FUNCTION="default" # Choose the 'fast' or 'default' ONNX embedding model, or 'accurate' (SentenceTransformer) model for local models
+    # CHROMA_CPU_EXECUTION_PROVIDER="true" # Forces CPU execution
+    # TOKENIZERS_PARALLELISM="false" # Disables parallelism for HuggingFace Tokenizers if no GPU available
     ```
+
+    To control specific embedding model behaviors when using the plugin, such as choosing the model, forcing CPU execution, or adjusting tokenizer parallelism, you can add variables like `CHROMA_EMBEDDING_FUNCTION`, `CHROMA_CPU_EXECUTION_PROVIDER`, and `TOKENIZERS_PARALLELISM` to this `.env` file. These are read by `chroma-mcp-client` to configure the embedding functions.
 
 ## Integrating the Plugin into Your Project
 

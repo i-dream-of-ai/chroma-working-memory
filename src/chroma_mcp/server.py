@@ -245,6 +245,43 @@ def _initialize_chroma_client(args: argparse.Namespace) -> None:
             # It will use its own internal default or EF specified at collection creation.
             _chroma_client_instance = chromadb.Client(settings=Settings(anonymized_telemetry=False))
 
+        # --- Ensure Essential Collections Exist ---
+        if _chroma_client_instance:
+            logger.info("Ensuring essential ChromaDB collections exist...")
+            essential_collections = [
+                "codebase_v1",
+                "chat_history_v1",
+                "derived_learnings_v1",
+                "thinking_sessions_v1",
+                "validation_evidence_v1",
+                "test_results_v1",
+            ]
+            collections_created_on_startup = 0
+            for coll_name in essential_collections:
+                try:
+                    # Try to get the collection to see if it exists
+                    _chroma_client_instance.get_collection(name=coll_name, embedding_function=embedding_function)
+                    logger.debug(f"Essential collection '{coll_name}' already exists.")
+                except Exception as e:  # Broad exception to catch various ways Chroma might indicate non-existence
+                    logger.info(
+                        f"Essential collection '{coll_name}' not found (error: {type(e).__name__}), attempting to create..."
+                    )
+                    try:
+                        _chroma_client_instance.get_or_create_collection(
+                            name=coll_name,
+                            embedding_function=embedding_function,
+                            # Optionally add default metadata if desired
+                            # metadata={"description": f"Auto-created essential collection: {coll_name}"}
+                        )
+                        logger.info(f"Successfully created essential collection '{coll_name}'.")
+                        collections_created_on_startup += 1
+                    except Exception as ce:
+                        logger.error(f"Failed to create essential collection '{coll_name}': {ce}", exc_info=True)
+            if collections_created_on_startup > 0:
+                logger.info(f"Created {collections_created_on_startup} essential collections on server startup.")
+        else:
+            logger.error("Chroma client instance is not available. Cannot ensure essential collections.")
+
         # Set embedding function ONLY for persistent and http (non-cloud)
         # This check is removed as PersistentClient gets embedding_function at init
         # if hasattr(_chroma_client_instance, 'set_embedding_function') and callable(getattr(_chroma_client_instance, 'set_embedding_function')):

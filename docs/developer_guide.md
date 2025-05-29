@@ -180,6 +180,8 @@ python -m chroma_mcp.cli --client-type http --host localhost --port 8000
 **Important:** When using `--client-type http` or `--client-type cloud`, the MCP server acts *only as a client*. You must have a separate ChromaDB server instance (e.g., running in Docker or via Chroma Cloud) accessible at the specified address or configured via cloud credentials.
 The `ephemeral` and `persistent` modes manage a local ChromaDB instance directly.
 
+**Automatic Collection Creation:** Upon startup, the server automatically checks for and creates essential ChromaDB collections (e.g., `codebase_v1`, `chat_history_v1`, `derived_learnings_v1`, `thinking_sessions_v1`, `validation_evidence_v1`, `test_results_v1`) if they are not already present. This ensures that the server is ready for use without requiring manual setup of these core collections.
+
 For testing integration with tools like Cursor that use `uvx`, you might use the `release.sh` script to build, publish (e.g., to TestPyPI), and install that specific version for the `uvx chroma-mcp-server` command (see Releasing below).
 
 ### Standard Mode (Using Installed Package)

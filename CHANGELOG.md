@@ -3,6 +3,24 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.28] - 2025-05-30
+
+**Fixed:**
+
+- Fixed ONNX model CPU execution issues by ensuring `CHROMA_CPU_EXECUTION_PROVIDER` is properly handled for `default`/`fast` embedding functions.
+
+## [0.2.27] - 2025-05-30
+
+**Added:**
+
+- The Chroma MCP Server now automatically creates essential ChromaDB collections (e.g., `codebase_v1`, `chat_history_v1`, `derived_learnings_v1`, `thinking_sessions_v1`, `validation_evidence_v1`, `test_results_v1`) upon startup if they are not already present. This simplifies initial setup and ensures the server is ready for use without manual collection creation.
+
+## [0.2.26] - 2025-05-29
+
+**Fixed:**
+
+- Ensured `chroma-mcp-client` (and thereby the pytest plugin) correctly respects CPU execution settings for embedding models. `CHROMA_CPU_EXECUTION_PROVIDER` environment variable is now properly handled for ONNX models (`default`/`fast` embedding functions), defaulting to CPU unless explicitly set to `false`. `TOKENIZERS_PARALLELISM` is now defaulted to `false` for the `accurate` (SentenceTransformer) model when CPU execution is implied or the variable is not set, to prevent issues on systems without GPU/parallel processing capabilities.
+
 ## [0.2.25] - 2025-05-22
 
 **Added:**

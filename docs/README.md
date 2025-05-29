@@ -30,6 +30,7 @@ Welcome to the Chroma MCP Server documentation. This guide provides comprehensiv
 - [Learning Validation Workflow](refactoring/learning_validation_workflow.md)
 - [ROI Measurement Framework](usage/roi_measurement.md)
 - [Automated Test Workflow](usage/automated_test_workflow.md)
+- [Automated Test Workflow (Pytest Plugin Usage)](integration/pytest_plugin_usage.md)
 
 ## Overview
 
@@ -78,7 +79,7 @@ The system includes a fully automated test-driven learning workflow that:
 - Promotes high-quality fixes to derived learnings
 - Integrates with Git hooks for seamless operation
 
-See the [Automated Test Workflow Guide](usage/automated_test_workflow.md) for implementation details.
+See the [Automated Test Workflow (Pytest Plugin Usage) Guide](integration/pytest_plugin_usage.md) for implementation details and how to integrate this into your own projects.
 
 ### Error-Driven Learning
 
